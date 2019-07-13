@@ -1,91 +1,166 @@
 const express = require('express');
 const app = express();
 
+//numero minimo de characteres que um nome deve conter
+const minChar = 4;
+
 //adicionando um middleware para permitir o uso de json nos requests
 app.use(express.json());
 
-const courses = [
-	{id: 1, name: 'course1'},
-	{id: 2, name: 'course2'},
-	{id: 3, name: 'course3'},
+//Array de usuarios inicialmente cadastrados
+const usuarios = [
+	{id: 1, nome: 'Joao da Silva', idade: '28'},
+	{id: 2, nome: 'Pedro Paulo', idade: '19'},
+	{id: 3, nome: 'Ricardo Ferraz', idade: '40'},
+	{id: 4, nome: 'Jose Antonio', idade: '31'}
 ];
 
-//quando no root do site, respondemos com hello world
+
+// Tela inicial (root) da aplicacao contendo pequena mensagem
 app.get('/', function(req, res){
-	res.send('Hello World!!!');
+	res.send('Exercicio REST-API SF Labs. Funcoes simples como visualizar, inserir, atualizar ou remover usuarios podem ser executadas com a ferramenta Postman.');
 });
 
-app.get('/api/courses', function(req, res){
-	res.send(courses);
+
+// Pedido para acessar a lista completa de usuarios cadastrados
+app.get('/api/usuarios', function(req, res){
+	//Caso nao existam usuarios cadastrados, uma simples mensagem de erro eh mostrada
+	if(!usuarios){
+		res.status(404).send('Nao existem usuarios cadastrados');
+	}
+	//senao, a lista dos usuarios cadastrados atualmente eh enviada como resposta
+	else
+		res.send(usuarios);
 });
 
-app.get('/api/courses/:id', function(req,res){
-	const course = courses.find(c => c.id === parseInt(req.params.id));
-	if (!course){ //404
-		res.status(404).send('The course with the given id was not found');
+
+// Metodo para encontrar o usuario com id especifico
+app.get('/api/usuarios/:id', function(req, res){
+	//Atribuo a variavel usuario o valor estabelecido em 'id'
+	const usuario = usuarios.find(u => u.id === parseInt(req.params.id));
+	//Caso este id nao exista nos registros, um erro simples eh retornado
+	if(!usuario){
+		res.status(404).send('O usuario com o id requisitado nao foi encontrado.');
 		return;
 	}
-	res.send(course);
-})
+	//Caso contrario, o usuario eh retornado
+	res.send(usuario);
+});
 
-app.post('/api/courses', function(req, res){
-	if(!req.body.name || req.body.name.lenght < 3){
-		//400 bad request
-		res.status(400).send('Name is required and should be minimum 3 characters.');
+
+// Metodo para adicionar um usuario no cadastro
+app.post('/api/usuarios', function(req, res){
+	//Atribuicao dos valores de nome e idade as variaveis correspondentes
+	console.log(req.body);
+	/*const { nomeUsuario, idadeUsuario } = req.body;*/
+	const nomeUsuario = req.body.nome;
+	const idadeUsuario = req.body.idade;
+
+	//Caso o nome nao tenha sido fornecido, uma mensagem de erro eh reportada e a insercao cancelada.
+	if(!nomeUsuario){
+		res.status(400).send('Necessario fornecer um nome.');
+		return;
+	}
+	//Caso o nome nao seja maior que um numero especifico de caracteres, uma mensagem de erro eh reportada e a insercao cancelada.
+	else if(nomeUsuario.length < minChar){
+		res.status(400).send('O nome fornecido deve possuir mais de 4 caracteres.');
+		return;
+	}
+	//Caso a idade do usuario nao seja fornecida, uma mensagem de erro eh reportada e a insercao cancelada.
+	else if(!idadeUsuario){
+		res.status(400).send('Necessario fornecer a idade do usuario.');
+		return;
+	}
+	//Caso a idade de um usuario seja negativa, uma mensagem de erro eh reportada e a insercao cancelada.
+	else if(idadeUsuario < 0){
+		res.status(400).send('A idade de um usuario nao pode ser negativa.');
 		return;
 	}
 
-	const course = {
-		id: courses.length + 1,
-		name: req.body.name
+	//Uma nova variavel do tipo usuario eh criada com os valores que se deseja inserir.
+	const usuario = {
+		id: usuarios.length + 1,
+		nome: nomeUsuario,
+		idade: idadeUsuario
 	};
 
-	//coloca o novo course no array courses
-	courses.push(course);
-	//por convencao, quando isto o servidor cria um novo item, retornamos como resposta o que foi inserido
-	res.send(course);
+	//O novo usuario eh inserido no array de usuarios
+	usuarios.push(usuario);
+	//Ao criar o novo item, uma resposta eh enviada com o conteudo criado.
+	res.send(usuario);
 });
 
-app.put('/api/courses/:id', function(req, res){
-	//procurar pelo course
-	//se nao existir, restorna 404
-	const course = courses.find(c => c.id === parseInt(req.params.id));
-	if (!course){ //404
-		res.status(404).send('The course with the given id was not found');
+
+//Metodo para atualizar os dados de um usuario
+app.put('/api/usuarios/:id', function(req, res){
+	//Primeiro busca-se pelo id do usuario no array de usuarios cadastrados.
+	const usuario = usuarios.find(u => u.id === parseInt(req.params.id));
+	//Caso ele nao exista, uma mensagem de erro eh reportada e a atualizacao cancelada.
+	if(!usuario){
+		res.status(404).send('O usuario com o id requisitado nao foi encontrado.');
 		return;
 	}
 
-	//Validar o course
-	//se invalido, retorna 400 - bad request
+	//Atribuicao dos valores de nome e idade as variaveis correspondentes
+	const nomeUsuario = req.body.nome;
+	const idadeUsuario = req.body.idade;
 
-	//update
-	course.name = req.body.name;
-	//retorna o course update
-	res.send(course);
-});
+	//A seguir, a mesma validacao dos dados realizada na insercao eh feita para a atualizacao
 
-app.delete('/api/courses/:id', function(req, res){
-	//procurar
-	//se n existir, retorna 404
-	const course = courses.find(c => c.id === parseInt(req.params.id));
-	if (!course){ //404
-		res.status(404).send('The course with the given id was not found');
+	//Caso o nome nao tenha sido fornecido, uma mensagem de erro eh reportada e a atualizacao cancelada.
+	if(!nomeUsuario){
+		res.status(400).send('Necessario fornecer um nome.');
 		return;
 	}
-	//deletar
-	const index = courses.indexOf(course);
-	courses.splice(index, 1);
+	//Caso o nome nao seja maior que um numero especifico de caracteres, uma mensagem de erro eh reportada e a atualizacao cancelada.
+	else if(nomeUsuario.length < minChar){
+		res.status(400).send('O nome fornecido deve possuir mais de 4 caracteres.');
+		return;
+	}
+	//Caso a idade do usuario nao seja fornecida, uma mensagem de erro eh reportada e a atualizacao cancelada.
+	else if(!idadeUsuario){
+		res.status(400).send('Necessario fornecer a idade do usuario.');
+		return;
+	}
+	//Caso a idade de um usuario seja negativa, uma mensagem de erro eh reportada e a atualizacao cancelada.
+	else if(idadeUsuario < 0){
+		res.status(400).send('A idade de um usuario nao pode ser negativa.');
+		return;
+	}
 
+	//A atualizacao do cadastro existente eh realizada
+	usuario.nome = nomeUsuario;
+	usuario.idade = idadeUsuario;
 
-	//retornar o mesmo course
-	res.send(course);
+	//Retorno do conteudo atualizado
+	res.send(usuario);
 });
 
 
-// port ira receber a PORT de algum ambiente de processos existente, ou 3000.
-const port = process.env.PORT || 3000;
+app.delete('/api/usuarios/:id', function(req, res){
+	//Primeiro busca-se pelo id do usuario no array de usuarios cadastrados.
+	const usuario = usuarios.find(u => u.id === parseInt(req.params.id));
+	//Caso ele nao exista, uma mensagem de erro eh reportada e a operacao deletar eh cancelada.
+	if(!usuario){
+		res.status(404).send('O usuario com o id requisitado nao foi encontrado.');
+		return;
+	}
 
-// diz em qual porta esta conectado
+	//Buscamos pelo indice do usuario que se deseja remover no array de usuarios cadastrados
+	const index = usuarios.indexOf(usuario);
+	//Removemos do array, usando splice, 1 objeto encontrado no indice = index
+	usuarios.splice(index, 1);
+
+	//Retorno do conteudo removido
+	res.send(usuario);
+});
+
+
+// 'port' ira receber a PORT de algum ambiente de processos existente, ou 1234.
+const port = 1234;
+//const port = process.env.PORT || 1234;
+
+//Diz no console em qual porta esta conectado
 app.listen(port, function(){
 	console.log(`Listening on port ${port}...`);
 });
