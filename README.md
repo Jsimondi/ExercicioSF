@@ -12,7 +12,7 @@ $ npm i express
 ## Executando
 Uma vez acessado o repositório e feita a instalação dos pacotes necessários, para executar o programa basta rodar a seguinte linha de código no terminal:
 ```
-$ npm index.js
+$ node index.js
 ```
 ### Porta 1234
 -----------------------------------
